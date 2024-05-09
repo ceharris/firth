@@ -17,7 +17,7 @@ initSerial:
     ld (lineBufSize), HL
 
     ld A,rts_low
-    out ($80),A                             ; initialise acia
+    out (IO_CTRL),A                         ; initialise acia
     im 1
     ei
     ret
@@ -26,10 +26,10 @@ serialIn:
     push AF
     push HL
 
-    in A,($80)
+    in A,(IO_CTRL)
     and $01             ; Check if interupt due to read lineBuf full
     _if nz
-        in A,($81)
+        in A,(IO_DATA)
         push AF
         ld A,(serBufUsed)
         cp SER_BUFSIZE     ; If full then ignore
@@ -52,7 +52,7 @@ serialIn:
             cp SER_FULLSIZE
             _if nc
                 ld A,RTS_HIGH
-                out ($80),A
+                out (IO_CTRL),A
             _endif
         _endif
     _endif
@@ -99,7 +99,7 @@ getc:
     cp SER_EMPTYSIZE
     _if c
         ld A,RTS_LOW
-        out ($80),A
+        out (IO_CTRL),A
     _endif
     ld A,(HL)
     ei
@@ -115,12 +115,12 @@ getc:
 putc:
     push     AF              ; STORE character
     _do
-        in A,($80)         ; Status byte
+        in A,(IO_CTRL)       ; Status byte
         bit 1,A             ; Set Zero flag if still transmitting character
     _until nz
     _enddo
     pop AF              ; Retrieve character
-    out ($81),A         ; Output the character
+    out (IO_DATA),A     ; Output the character
     ret
 
 inputReady:
